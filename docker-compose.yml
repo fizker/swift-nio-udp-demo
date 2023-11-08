@@ -1,0 +1,7 @@
+services:
+  dns-server:
+    build:
+      context: .
+      dockerfile: Dockerfile-async-echo
+    ports:
+      - '9090:9090/udp'

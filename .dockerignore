@@ -1,0 +1,8 @@
+.DS_Store
+.build
+.dockerignore
+.git
+.gitignore
+.swiftpm
+Dockerfile*
+docker-compose*.yml

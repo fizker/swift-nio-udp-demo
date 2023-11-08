@@ -1,0 +1,55 @@
+# ================================
+# Build image
+# ================================
+FROM swift:5.9-jammy as compiler
+
+# Make sure all system packages are up to date.
+RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+	&& apt-get -q update \
+	&& apt-get -q dist-upgrade -y \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Set up a build area
+WORKDIR /build
+
+# First just resolve dependencies.
+# This creates a cached layer that can be reused
+# as long as your Package.swift/Package.resolved
+# files do not change.
+COPY ./Package.* ./
+RUN swift package resolve
+
+RUN rm -rf Sources Tests
+
+# Copy entire repo into container
+COPY . .
+
+# Build everything, with optimizations and test discovery
+RUN swift build \
+	--enable-test-discovery \
+	--configuration release \
+	--product async-echo-server
+
+# Switch to the staging area
+RUN mkdir -p /staging && cp .build/release/async-echo-server /staging
+
+
+# ================================
+# Run image
+# ================================
+FROM swift:5.9-jammy-slim as runner
+
+# Make sure all system packages are up to date.
+RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+	&& apt-get -q update \
+	&& apt-get -q dist-upgrade -y \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Switch to the new home directory
+WORKDIR /app
+
+# Copy built executable and any staged resources from builder
+COPY --from=compiler /staging /app
+
+ENTRYPOINT ["./async-echo-server"]
+CMD []
