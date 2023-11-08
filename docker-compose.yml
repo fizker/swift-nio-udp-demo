@@ -1,7 +1,13 @@
 services:
-  dns-server:
+  async-echo:
     build:
       context: .
       dockerfile: Dockerfile-async-echo
+    ports:
+      - '9090:9090/udp'
+  event-loop-echo:
+    build:
+      context: .
+      dockerfile: Dockerfile-event-loop-echo
     ports:
       - '9090:9090/udp'
